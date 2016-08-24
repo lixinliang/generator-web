@@ -1,0 +1,33 @@
+{
+  "name": "generator-web",
+  "version": "0.0.1",
+  "description": "A simple webpack generator",
+  "license": "MIT",
+  "main": "app/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lixinliang/generator-web.git"
+  },
+  "author": {
+    "name": "lixinliang",
+    "email": "393464140@qq.com",
+    "url": "https://github.com/lixinliang"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "files": [
+    "generators"
+  ],
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "dependencies": {
+    "yeoman-generator": "^0.19.0",
+    "chalk": "^1.0.0",
+    "yosay": "^1.0.2"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  }
+}
