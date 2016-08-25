@@ -48,15 +48,14 @@ module.exports = yeoman.generators.Base.extend({
     },
     install: function () {
         del(['src/**/.gitignore','src/**/.npmignore']);
-        // this.installDependencies({
-        //     bower      : false,
-        //     // npm        : true,
-        //     npm        : false,
-        //     skipInstall: false,
-        //     callback   : () => {
-        //         log('> 初始化已完成');
-        //         process.exit(1);
-        //     }
-        // });
+        this.installDependencies({
+            bower      : false,
+            npm        : true,
+            skipInstall: false,
+            callback   : () => {
+                log('> 初始化已完成');
+                process.exit(1);
+            }
+        });
     }
 });
