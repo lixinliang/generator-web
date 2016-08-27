@@ -84,10 +84,14 @@ let entry = {};
                                     source.tag = 'style';
                                     source.content = source.fileContent.replace(/url\(.*?\)/g, function ( match ) {
                                         let url = match.substring(0, match.length - 1).substring(4);
-                                        if (url.indexOf('?')) {
-                                            url = url.split('?')[0];
+                                        if (/^http(s?):\/\//.test(url)) {
+                                            return match;
+                                        } else {
+                                            if (url.indexOf('?')) {
+                                                url = url.split('?')[0];
+                                            }
+                                            return `url(${ path.join('dist', url) })`;
                                         }
-                                        return `url(${ path.join('dist', url) })`;
                                     });
                                 }
                             },
