@@ -65,4 +65,10 @@ module.exports = {
             },
         }),
     ],
+    vue : {
+        loaders : {
+            sass : extractTextPlugin.extract('style', 'css!autoprefixer?browsers=last 2 version!sass?indentedSyntax'),
+            scss : extractTextPlugin.extract('style', 'css!autoprefixer?browsers=last 2 version!sass'),
+        }
+    },
 };
