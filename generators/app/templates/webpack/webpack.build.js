@@ -9,7 +9,7 @@ let extractTextPlugin = require('extract-text-webpack-plugin');
 const banner =
 `@ProjectName ${ packageJson.name }
 @Version ${ packageJson.version }
-@Author ${ packageJson.author }
+@Author ${ packageJson.author.name }(${ packageJson.author.url })
 @Update ${ moment().format('YYYY-MM-DD h:mm:ss a') }`;
 
 let entry = require('./entry.js');
