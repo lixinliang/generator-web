@@ -7,6 +7,10 @@ let shell = require('shelljs');
 
 let entry = {};
 
+/**
+ * fs.writeFileSync -- create `webpack.entry` dynamically
+ * shell.exec -- run webpack
+ */
 (new Promise(( resolve, reject ) => {
     let content = path.join(__dirname, '../src/entry/');
     fs.readdir(content, ( err, files ) => {

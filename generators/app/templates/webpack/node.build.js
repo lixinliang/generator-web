@@ -9,9 +9,10 @@ let inline = require('inline-source').sync;
 
 let entry = {};
 
+/**
+ * fse.remove -- remove old files
+ */
 (new Promise(( resolve, reject ) => {
-    resolve();
-    return;
     fse.remove('./dist/*', ( err ) => {
         if (err) {
             reject(err);
@@ -19,6 +20,9 @@ let entry = {};
         resolve();
     });
 })).then(() => {
+    /**
+     * fse.copySync -- copy files like `html` or `images`
+     */
     return new Promise(( resolve, reject ) => {
         let content = path.join(__dirname, '../src/');
         fs.readdir(content, ( err, files ) => {
@@ -37,6 +41,10 @@ let entry = {};
         });
     });
 }).then(() => {
+    /**
+     * fs.writeFileSync -- create `webpack.entry` dynamically
+     * shell.exec -- run webpack
+     */
     return new Promise(( resolve, reject ) => {
         let content = path.join(__dirname, '../src/entry/');
         fs.readdir(content, ( err, files ) => {
@@ -63,6 +71,9 @@ let entry = {};
         });
     });
 }).then(() => {
+    /**
+     * inline -- According to `inline` attribute and replace the code
+     */
     return new Promise(( resolve, reject ) => {
         let content = path.join(__dirname, '../dist/');
         fs.readdir(content, ( err, files ) => {
