@@ -5,36 +5,53 @@ let path = require('path');
 let fse = require('fs-extra');
 let shell = require('shelljs');
 
-let entry = {};
+const sourcePath = path.join(__dirname, '../src');
+
+let start = () => {
+    step1().then(step2).catch((err) => {
+        console.log(err.toString().red);
+    });
+};
 
 /**
- * fs.writeFileSync -- create `webpack.entry` dynamically
- * shell.exec -- run webpack
+ * [step1] fse.outputJson -- Create `webpack.entry.json` dynamically
+ * @return {Promise} create_entry_success
  */
-(new Promise(( resolve, reject ) => {
-    let content = path.join(__dirname, '../src/entry/');
-    fs.readdir(content, ( err, files ) => {
+let step1 = () => new Promise(( resolve, reject ) => {
+    let entry = {};
+    let entryPath = path.join(sourcePath, 'entry');
+    fs.readdir(entryPath, ( err, files ) => {
         if (err) {
             reject(err);
             return;
         }
         files.forEach(( filename ) => {
-            let file = `${ content }${ filename }`;
-            let stats = fs.statSync(file);
-            if (stats.isFile()) {
-                if (path.extname(file) === '.js') {
-                    entry[path.basename(filename, '.js')] = file;
-                }
+            let file = path.join(entryPath, filename);
+            if (fs.statSync(file).isFile() && path.extname(file) == '.js') {
+                entry[path.basename(filename, '.js')] = file;
             }
         });
-        fs.writeFileSync(path.join(__dirname, './entry.js'), `module.exports = ${ JSON.stringify(entry) }`);
-        let result = shell.exec('webpack-dev-server --inline --quiet --devtool eval --progress --colors --content-base ./src/ --hot --config ./webpack/webpack.dev.js --host 0.0.0.0');
-        if(result.code === 0){
+        fse.outputJson(path.join(__dirname, 'webpack.entry.json'), entry, ( err ) => {
+            if (err) {
+                reject(err);
+                return;
+            }
             resolve();
-        }else{
-            reject(result.stderr);
-        }
+        });
     });
-})).catch((err) => {
-    console.log(err);
 });
+
+/**
+ * [step2] shell.exec -- Run webpack
+ * @return {Promise} run_webpack_success
+ */
+let step2 = () => new Promise(( resolve, reject ) => {
+    let result = shell.exec('webpack-dev-server --inline --quiet --devtool eval --progress --colors --content-base ./src/ --hot --config ./webpack/webpack.dev.js --host 0.0.0.0');
+    if (result.code === 0) {
+        resolve();
+    } else {
+        reject(result.stderr);
+    }
+});
+
+start();
