@@ -15,20 +15,20 @@ function Profile () {}
 Profile.prototype.apply = function ( compiler ) {
     let dist = path.join(compiler.context, compiler.options.output.path);
     let files = [];
-    compiler.plugin('compilation', function ( compilation ) {
-        compilation.plugin('optimize-chunk-assets', function ( chunks, callback ) {
-            chunks.forEach(function ( chunk ) {
-				chunk.files.forEach(function ( file ) {
+    compiler.plugin('compilation', ( compilation ) => {
+        compilation.plugin('optimize-chunk-assets', ( chunks, callback ) => {
+            chunks.forEach(( chunk ) => {
+				chunk.files.forEach(( file ) => {
                     files.push(file);
                 });
 			});
 			callback();
         });
     });
-    compiler.plugin('done', function ( stat ) {
-        files.forEach(function ( file ) {
+    compiler.plugin('done', ( stat ) => {
+        files.forEach(( file ) => {
             let filepath = path.join(dist, file);
-            fs.readFile(filepath, 'utf8', function ( err, data ) {
+            fs.readFile(filepath, 'utf8', ( err, data ) => {
                 if (err) {
                     throw err;
                 }

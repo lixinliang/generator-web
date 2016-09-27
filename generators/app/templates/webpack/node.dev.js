@@ -4,6 +4,7 @@ let fs = require('fs');
 let path = require('path');
 let fse = require('fs-extra');
 let shell = require('shelljs');
+let colors = require('colors');
 
 const sourcePath = path.join(__dirname, '../src');
 
