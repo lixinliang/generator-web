@@ -4,8 +4,8 @@
   "description": "<%= description %>",
   "main": "",
   "scripts": {
-    "dev": "node ./webpack/node.dev.js",
-    "build": "node ./webpack/node.build.js"
+    "dev": "node ./webpack/webpack.node.js -dev",
+    "build": "node ./webpack/webpack.node.js -build"
   },
   "author": {
     "name": "lixinliang",
@@ -31,6 +31,7 @@
     "minifycss-loader": "^0.2.0",
     "moment": "~2.8.3",
     "node-sass": "^3.7.0",
+    "prompt": "^1.0.0",
     "sass-loader": "^3.2.0",
     "shelljs": "^0.7.0",
     "style-loader": "^0.13.1",

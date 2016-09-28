@@ -5,22 +5,46 @@ let path = require('path');
 let fse = require('fs-extra');
 let shell = require('shelljs');
 let colors = require('colors');
+let prompt = require('prompt');
 let inline = require('inline-source').sync;
 
+const port = 8080;
 const sourcePath = path.join(__dirname, '../src');
 const outputPath = path.join(__dirname, '../dist');
 
+let cmd;
+
 let start = () => {
-    // step1().then(step2).then(step3).then(step4).then(step5).then(() => {
-    //     console.log('build complete!'.green);
-    // }).catch((err) => {
-    //     console.log(err.toString().red);
-    // });
-    step1().then(step3).then(step4).then(step5).then(() => {
-        console.log('build complete!'.green);
-    }).catch((err) => {
-        console.log(err.toString().red);
-    });
+    let task = process.argv[2].substring(1);
+    if (task == 'dev') {
+        cmd = `webpack-dev-server --inline --quiet --devtool eval --progress --colors --content-base ./src/ --hot --config ./webpack/webpack.dev.js --host 0.0.0.0 --port ${ port }`;
+        step3().then(step4).catch(( err ) => {
+            if (/listen EADDRINUSE/.test(err.toString())) {
+                step6().then(step7).then(step8).catch(( err ) => {
+                    console.log(err.toString().red);
+                }).then(start);
+            } else {
+                console.log(err.toString().red);
+            }
+        });
+    }
+    if (task == 'build') {
+        if (process.argv[3] && process.argv[3] == 'js') {
+            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js only-js';
+            step1().then(step3).then(step4).then(() => {
+                console.log('build complete!'.green);
+            }).catch((err) => {
+                console.log(err.toString().red);
+            });
+        } else {
+            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js';
+            step1().then(step2).then(step3).then(step4).then(step5).then(() => {
+                console.log('build complete!'.green);
+            }).catch(( err ) => {
+                console.log(err.toString().red);
+            });
+        }
+    }
 };
 
 /**
@@ -94,7 +118,7 @@ let step3 = () => new Promise(( resolve, reject ) => {
  * @return {Promise} run_webpack_success
  */
 let step4 = () => new Promise(( resolve, reject ) => {
-    let result = shell.exec('webpack --progress --colors --config ./webpack/webpack.build.js');
+    let result = shell.exec(cmd);
     if (result.code === 0) {
         resolve();
     } else {
@@ -145,6 +169,52 @@ let step5 = () => new Promise(( resolve, reject ) => {
         });
         resolve();
     });
+});
+
+/**
+ * [step6] shell.exec -- List open files
+ * @return {Promise} list_files_success
+ */
+let step6 = () => new Promise(( resolve, reject ) => {
+    console.log(`\n${ port }端口已被占用，请选择要杀死的进程：`.green);
+    let result = shell.exec(`lsof -i tcp:${ port }`);
+    if (result.code === 0) {
+        resolve();
+    } else {
+        reject(result.stderr);
+    }
+});
+
+/**
+ * [step7] prompt.get -- Get PID
+ * @return {Promise} get_pid_success
+ */
+let step7 = () => new Promise(( resolve, reject ) => {
+    prompt.start();
+    prompt.get(['PID'], function ( err, result ) {
+        if (err) {
+            reject(err);
+            return;
+        };
+        if (result.PID) {
+            resolve(result.PID);
+        } else {
+            reject('PID 为空');
+        }
+    });
+});
+
+/**
+ * [step8] shell.exec -- Kill PID
+ * @return {Promise} kill_pid_success
+ */
+let step8 = ( pid ) => new Promise(( resolve, reject ) => {
+    let result = shell.exec(`kill ${ pid }`);
+    if (result.code === 0) {
+        resolve();
+    } else {
+        reject(result.stderr);
+    }
 });
 
 start();

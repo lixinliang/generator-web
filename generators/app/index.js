@@ -65,7 +65,7 @@ module.exports = yeoman.generators.Base.extend({
                 type : 'confirm',
                 name : 'overwrite_src',
                 message : '是否覆盖src目录',
-                default : true,
+                default : false,
             });
         }
         if (!task.webpack) {
@@ -92,9 +92,11 @@ module.exports = yeoman.generators.Base.extend({
             this.copy('package.json', 'package.json');
         }
         if (task.src) {
+            del('src/*');
             this.directory('src', 'src');
         }
         if (task.webpack) {
+            del('webpack/*');
             this.directory('webpack', 'webpack');
         }
     },
