@@ -176,7 +176,7 @@ let step5 = () => new Promise(( resolve, reject ) => {
  * @return {Promise} list_files_success
  */
 let step6 = () => new Promise(( resolve, reject ) => {
-    console.log(`\n${ port }端口已被占用，请选择要杀死的进程：`.green);
+    console.log(`\n${ port } is aleary in use. Ctrl+C to leave or input a PID to kill：`.green);
     let result = shell.exec(`lsof -i tcp:${ port }`);
     if (result.code === 0) {
         resolve();
@@ -199,7 +199,7 @@ let step7 = () => new Promise(( resolve, reject ) => {
         if (result.PID) {
             resolve(result.PID);
         } else {
-            reject('PID 为空');
+            reject('PID is empty');
         }
     });
 });
