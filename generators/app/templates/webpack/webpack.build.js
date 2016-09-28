@@ -88,7 +88,7 @@ module.exports = {
     },
 };
 
-if (process.argv[process.argv.length] == 'only-js') {
+if (process.argv[process.argv.length-1] == '--only-js') {
     module.exports.output = {
         path : './dist/',
         filename : '[name].min.js',

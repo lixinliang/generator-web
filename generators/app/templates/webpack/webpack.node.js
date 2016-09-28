@@ -5,8 +5,8 @@ let path = require('path');
 let fse = require('fs-extra');
 let shell = require('shelljs');
 let colors = require('colors');
-let prompt = require('prompt');
 let inline = require('inline-source').sync;
+let inquirer = require('inquirer');
 
 const port = 8080;
 const sourcePath = path.join(__dirname, '../src');
@@ -30,8 +30,8 @@ let start = () => {
     }
     if (task == 'build') {
         if (process.argv[3] && process.argv[3] == 'js') {
-            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js only-js';
-            step1().then(step3).then(step4).then(() => {
+            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js --only-js';
+            step3().then(step9).then(step1).then(step4).then(() => {
                 console.log('build complete!'.green);
             }).catch((err) => {
                 console.log(err.toString().red);
@@ -108,7 +108,7 @@ let step3 = () => new Promise(( resolve, reject ) => {
                 reject(err);
                 return;
             }
-            resolve();
+            resolve(entry);
         });
     });
 });
@@ -186,21 +186,18 @@ let step6 = () => new Promise(( resolve, reject ) => {
 });
 
 /**
- * [step7] prompt.get -- Get PID
+ * [step7] inquirer.prompt -- Get PID
  * @return {Promise} get_pid_success
  */
 let step7 = () => new Promise(( resolve, reject ) => {
-    prompt.start();
-    prompt.get(['PID'], function ( err, result ) {
-        if (err) {
-            reject(err);
-            return;
-        };
-        if (result.PID) {
-            resolve(result.PID);
-        } else {
-            reject('PID is empty');
-        }
+    inquirer.prompt([{
+        type : 'input',
+        name : 'pid',
+        message : 'PID:',
+    }]).then(( answers ) => {
+        resolve(answers.pid);
+    }).catch(( err ) => {
+        reject(err);
     });
 });
 
@@ -214,6 +211,40 @@ let step8 = ( pid ) => new Promise(( resolve, reject ) => {
         resolve();
     } else {
         reject(result.stderr);
+    }
+});
+
+/**
+ * [step9] inquirer.prompt -- Get js file
+ * @return {Promise} get_js_success
+ */
+let step9 = ( entry ) => new Promise(( resolve, reject ) => {
+    let choices = Object.keys(entry);
+    if (choices.length) {
+        choices.forEach(( file, index ) => {
+            choices[index] = file + '.js';
+        });
+        inquirer.prompt([{
+            type : 'list',
+            name : 'file',
+            message : 'Select a file to pack:',
+            choices,
+        }]).then(( answers ) => {
+            let file = path.basename(answers.file, '.js');
+            let js = {};
+            js[file] = entry[file];
+            fse.outputJson(path.join(__dirname, 'webpack.entry.json'), js, ( err ) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve();
+            });
+        }).catch(( err ) => {
+            reject(err);
+        });
+    } else {
+        reject('There is any js file in entry.');
     }
 });
 
