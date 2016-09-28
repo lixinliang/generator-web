@@ -7,6 +7,8 @@ let ExtractText = require('extract-text-webpack-plugin');
 const alias = {};
 const entry = require('./webpack.entry.json');
 
+const imageSize = 10240;
+
 module.exports = {
     devtool : '#source-map',
     entry,
@@ -30,7 +32,7 @@ module.exports = {
             },
             {
                 test : /\.(png|jpg|gif|svg)$/,
-                loader : 'url?limit=10240&name=../image/[name].[ext]?[hash]',
+                loader : `url?limit=${ imageSize }&name=../img/[name].[ext]?[hash]`,
             },
             {
                 test : /\.css$/,

@@ -16,15 +16,18 @@ const banner =
 @Author ${ packageJson.author.name }(${ packageJson.author.url })
 @Update ${ moment().format('YYYY-MM-DD h:mm:ss a') }`;
 
+const imageSize = 10240;
+
 module.exports = {
     entry,
     output : {
-        // path : './dist/js/',
-        path : './dist/',
-        filename : '[name].min.js',
-        // libraryTarget : 'umd',
+        path : './dist/js/',
+        filename : '[name].js',
     },
-    extensions: ['.vue', '.js', '.json', '.scss', '.html'],
+    extensions : ['.vue', '.js', '.json', '.scss', '.html'],
+    resolve : {
+        alias,
+    },
     module : {
         loaders : [
             {
@@ -37,18 +40,15 @@ module.exports = {
             },
             {
                 test : /\.(png|jpg|gif|svg)$/,
-                loader : 'url?limit=10240&name=../img/[name].[ext]?[hash]',
+                loader : `url?limit=${ imageSize }&name=../img/[name].[ext]?[hash]`,
             },
-
             {
                 test : /\.css$/,
                 loader : ExtractText.extract('style', 'css'),
-                // loaders: ['css', 'autoprefixer'],
             },
             {
                 test : /\.scss$/,
                 loader : ExtractText.extract('style', 'css?localIdentName=[local]___[hash:base64:5]!autoprefixer?browsers=last 2 version!sass'),
-                // loaders: ['css', 'autoprefixer', 'sass'],
             },
             {
                 test : /\.js$/,
@@ -64,16 +64,21 @@ module.exports = {
     },
     plugins : [
         new ExtractText('../css/[name].css'),
-        // new webpack.Profile(),
-        new webpack.BannerPlugin(banner),
+        new webpack.Profile(),
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV : '"production"',
+            },
+        }),
         new webpack.optimize.UglifyJsPlugin({
             compress : {
-                warnings : false
+                warnings : false,
             },
             output : {
                 comments : false,
             },
         }),
+        new webpack.BannerPlugin(banner),
     ],
     vue : {
         loaders : {
@@ -82,3 +87,16 @@ module.exports = {
         }
     },
 };
+
+if (process.argv[process.argv.length] == 'only-js') {
+    module.exports.output = {
+        path : './dist/',
+        filename : '[name].min.js',
+        libraryTarget : 'umd',
+    };
+    module.exports.plugins.shift();
+    let loaders = module.exports.module.loaders;
+    loaders[3].loaders = ['css', 'autoprefixer'];
+    loaders[4].loaders = ['css', 'autoprefixer', 'sass'];
+    loaders[3].loader = loaders[4].loader = void 0;
+}

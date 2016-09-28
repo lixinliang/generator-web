@@ -19,7 +19,9 @@ Profile.prototype.apply = function ( compiler ) {
         compilation.plugin('optimize-chunk-assets', ( chunks, callback ) => {
             chunks.forEach(( chunk ) => {
 				chunk.files.forEach(( file ) => {
-                    files.push(file);
+                    if (path.extname(file) == '.js') {
+                        files.push(file);
+                    }
                 });
 			});
 			callback();
