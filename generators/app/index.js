@@ -45,17 +45,17 @@ module.exports = yeoman.generators.Base.extend({
             questions = [
                 {
                     name : 'name',
-                    message : '项目名称',
+                    message : 'Name',
                     default : 'Project',
                 },
                 {
                     name : 'version',
-                    message : '项目版本号',
+                    message : 'Version',
                     default : '0.0.1',
                 },
                 {
                     name : 'description',
-                    message : '项目描述',
+                    message : 'Description',
                     default : 'none',
                 }
             ];
@@ -64,7 +64,7 @@ module.exports = yeoman.generators.Base.extend({
             questions.push({
                 type : 'confirm',
                 name : 'overwrite_src',
-                message : '是否覆盖src目录',
+                message : 'Whether to overwrite [src]',
                 default : false,
             });
         }
@@ -72,7 +72,7 @@ module.exports = yeoman.generators.Base.extend({
             questions.push({
                 type : 'confirm',
                 name : 'overwrite_webpack',
-                message : '是否覆盖webpack目录',
+                message : 'Whether to overwrite [webpack]',
                 default : true,
             });
         }

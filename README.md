@@ -65,6 +65,15 @@
 
 * Include the file which is require with `inline` attribute in HTML.
 
+* Put these comments in the top of the js file, then you use `$ npm run build js`, that it will follow those rule to pack.
+```
+/**
+ * @webpack
+ * @library example
+ * @libraryTarget umd
+ */
+```
+
 ## License
 
 MIT
