@@ -29,15 +29,14 @@ let start = () => {
         });
     }
     if (task == 'build') {
+        cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js';
         if (process.argv[3] && process.argv[3] == 'js') {
-            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js --only-js';
-            step3().then(step9).then(step1).then(step4).then(() => {
+            step3().then(step9).then(step10).then(( option ) => cmd += option).then(step1).then(step4).then(() => {
                 console.log('build complete!'.green);
             }).catch((err) => {
                 console.log(err.toString().red);
             });
         } else {
-            cmd = 'webpack --progress --colors --config ./webpack/webpack.build.js';
             step1().then(step2).then(step3).then(step4).then(step5).then(() => {
                 console.log('build complete!'.green);
             }).catch(( err ) => {
@@ -238,7 +237,7 @@ let step9 = ( entry ) => new Promise(( resolve, reject ) => {
                     reject(err);
                     return;
                 }
-                resolve();
+                resolve(js[file]);
             });
         }).catch(( err ) => {
             reject(err);
@@ -246,6 +245,33 @@ let step9 = ( entry ) => new Promise(( resolve, reject ) => {
     } else {
         reject('There is any js file in entry.');
     }
+});
+
+/**
+ * [step10] fs.readFile -- Get js webpack config
+ * @return {Promise} get_config_success
+ */
+let step10 = ( filepath ) => new Promise(( resolve, reject ) => {
+    fs.readFile(filepath, (err, buffer) => {
+        if (err) {
+            reject(err);
+            return;
+        }
+        let result = '';
+        let match = buffer.toString().match(/\/\*(.|\n)*?\*\//);
+        if (match) {
+            let comments = match[0].match(/@.*/g);
+            if (comments && comments[0].trim().substring('1') == 'webpack') {
+                if (comments[1] && /^@library\b/.test(comments[1]) && !/^@library$/.test(comments[1].trim())) {
+                    result += comments[1].trim().replace(' ', '=').replace(/\s/g, '').replace('@', ' --');
+                }
+                if (comments[2] && /^@libraryTarget\b/.test(comments[2]) && !/^@library$/.test(comments[2].trim())) {
+                    result += comments[2].trim().replace(' ', '=').replace(/\s/g, '').replace('@', ' --');
+                }
+            }
+        }
+        resolve(result + ' --build=js');
+    });
 });
 
 start();

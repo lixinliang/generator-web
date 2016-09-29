@@ -88,15 +88,19 @@ module.exports = {
     },
 };
 
-if (process.argv[process.argv.length-1] == '--only-js') {
-    module.exports.output = {
+if (process.argv[process.argv.length-1] == '--build=js') {
+    let output = {
         path : './dist/',
         filename : '[name].min.js',
-        libraryTarget : 'umd',
     };
     module.exports.plugins.shift();
     let loaders = module.exports.module.loaders;
     loaders[3].loaders = ['css', 'autoprefixer'];
     loaders[4].loaders = ['css', 'autoprefixer', 'sass'];
     loaders[3].loader = loaders[4].loader = void 0;
+    process.argv.slice(-3).slice(0, 2).forEach(( argument ) => {
+        let result = argument.trim().replace('--', '').split('=');
+        output[result[0]] = result[1];
+    });
+    module.exports.output = output;
 }
