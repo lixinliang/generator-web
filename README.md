@@ -11,6 +11,11 @@
 * `$ npm install`
 * `$ npm link`
 
+### Custom
+
+* `$ open generators/app/templates/package.json`
+* Custom your `package.json`, such as change the author.
+
 ### Use
 
 * `$ yo web`
@@ -51,21 +56,29 @@
 
 ### Feature
 
-* Can update `webpack` or `src` directory when it is exist already;
+**-`yo web`-**
 
-* If the port is eaddrinuse, there is a prompt to help you to kill it;
+* Exec `$ yo web` again in the initialized directory can restore `webpack` or `src` directory;
 
-* Use `$ npm run build js` to pack a single js file which is a subfile of `entry` directory;
+**-`npm run dev`-**
 
-* Create webpack entry dynamically;
+* Create webpack entry dynamically, depend on the js file in `entry` directory;
 
-* Use `process.env.NODE_ENV === 'production'` to mark codes effect in production only.
+* If the net port is EADDRINUSE, when you exec `$ npm run dev` there is a prompt to help you to kill it;
 
-* According to `package.json`, replace `@NAME` or `@VERSION` to correct value.
+**-`npm run build`-**
 
-* Include the file which is require with `inline` attribute in HTML.
+* Use `process.env.NODE_ENV === 'production'` to condition your code effect in development or production;
 
-* Put these comments in the top of the js file, then you use `$ npm run build js`, that it will follow those rule to pack.
+* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, when `$ npm run build`;
+
+* Include the file which is require with `inline` attribute in HTML;
+
+**-`npm run build js`-**
+
+* Exec `$ npm run build js` to pack a single js file which is a subfile of `entry` directory;
+
+* Put these comments in the top of the js file, then you use `$ npm run build js`, that it will follow those rule to pack;
 ```
 /**
  * @webpack
