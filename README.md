@@ -9,7 +9,9 @@
 * Clone or download.
 * `$ cd generator-web`
 * `$ npm install`
+    * If install fail, please try again later.
 * `$ npm link`
+    * This step will install node_modules in `generator-web/generators/app/templates/`, if install fail, please try again manually.
 
 ### Custom
 
@@ -58,7 +60,9 @@
 
 **-`yo web`-**
 
-* Exec `$ yo web` again in the initialized directory can restore `webpack` or `src` directory;
+* Exec `$ yo web` and the default project name is your directory name;
+
+* Exec `$ yo web` again in the initialized directory can restore `webpack` or `src` directory or `package.json` file;
 
 **-`npm run dev`-**
 

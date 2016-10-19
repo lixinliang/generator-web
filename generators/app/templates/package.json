@@ -1,6 +1,6 @@
 {
-  "name": "<%= name %>",
-  "version": "<%= version %>",
+  "name": "placeholder",
+  "version": "0.0.1",
   "description": "<%= description %>",
   "main": "",
   "scripts": {
