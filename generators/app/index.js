@@ -146,7 +146,7 @@ module.exports = yeoman.generators.Base.extend({
                 {
                     type : 'list',
                     name : 'install_node_modules',
-                    message : 'link to shared node_modules or Install node_modules?',
+                    message : 'Link to shared node_modules or Install node_modules here?',
                     choices,
                 },
             ], ( answers ) => {

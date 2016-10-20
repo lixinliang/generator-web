@@ -64,6 +64,10 @@
 
 * Exec `$ yo web` again in the initialized directory can restore `webpack` or `src` directory or `package.json` file;
 
+* Now, you can choose `Link to the shared node_modules` or `Install node_modules` in generating stage;
+
+* `shared node_modules` means that all project will share a same node_modules, and they both link to `generator-web/generators/app/templates/node_modules`;
+
 **-`npm run dev`-**
 
 * Create webpack entry dynamically, depend on the js file in `entry` directory;
