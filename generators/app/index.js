@@ -151,7 +151,8 @@ module.exports = yeoman.generators.Base.extend({
                 },
             ], ( answers ) => {
                 if (answers.install_node_modules == choices[0]) {
-                    shell.exec(`ln -s ${ path.join(__dirname, './templates/node_modules') } node_modules`);
+                    // shell.exec(`ln -s ${ path.join(__dirname, './templates/node_modules') } node_modules`);
+                    fs.symlinkSync(path.join(__dirname, './templates/node_modules'), 'node_modules');
                     log('> 初始化已完成');
                     process.exit(1);
                 } else {
