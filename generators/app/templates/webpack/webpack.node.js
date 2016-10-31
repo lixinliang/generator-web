@@ -149,7 +149,7 @@ let step5 = () => new Promise(( resolve, reject ) => {
                                 source.tag = 'style';
                                 source.content = source.fileContent.replace(/url\(.*?\)/g, function ( match ) {
                                     let url = match.substring(0, match.length - 1).substring(4);
-                                    if (/^http(s?):\/\/|data:image/.test(url)) {
+                                    if (/^http(s?):\/\/|^data:image/.test(url)) {
                                         return match;
                                     } else {
                                         if (url.indexOf('?')) {
