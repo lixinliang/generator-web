@@ -1,7 +1,7 @@
 {
   "name": "generator-web",
   "version": "0.0.1",
-  "description": "A simple webpack generator",
+  "description": "🎉A simple webpack generator",
   "license": "MIT",
   "main": "app/index.js",
   "repository": {
