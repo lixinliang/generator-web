@@ -88,19 +88,29 @@ module.exports = {
     },
 };
 
-if (process.argv[process.argv.length-1] == '--build=js') {
-    let output = {
-        path : './dist/',
-        filename : '[name].min.js',
-    };
-    module.exports.plugins.shift();
+process.argv.forEach(( param ) => {
+    if (/^--/.test(param)) {
+        let temp = param.slice(2).split('=');
+        let key = temp[0];
+        let value = temp[1] || true;
+        process.argv[key] = value;
+    }
+});
+if (process.argv.build == 'js') {
+    if (process.argv.uglify) {
+        module.exports.plugins.shift();
+    } else {
+        module.exports.plugins.splice(3, 1);
+        module.exports.plugins.shift();
+    }
     let loaders = module.exports.module.loaders;
     loaders[3].loaders = ['css', 'autoprefixer'];
     loaders[4].loaders = ['css', 'autoprefixer', 'sass'];
     loaders[3].loader = loaders[4].loader = void 0;
-    process.argv.slice(-3).slice(0, 2).forEach(( argument ) => {
-        let result = argument.trim().replace('--', '').split('=');
-        output[result[0]] = result[1];
-    });
-    module.exports.output = output;
+    module.exports.output = {
+        path : './dist/',
+        filename : `[name]${ process.argv.uglify ? '.min' : '' }.js`,
+        library : process.argv.library,
+        libraryTarget : process.argv.libraryTarget,
+    };
 }
