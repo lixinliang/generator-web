@@ -44,8 +44,7 @@
     ├── webpack.build.js
     ├── webpack.dev.js
     ├── webpack.entry.json
-    ├── webpack.node.js
-    └── webpack.profile.js
+    └── webpack.node.js
 ```
 
 ### Develop
@@ -74,13 +73,19 @@
 
 * If the net port is EADDRINUSE, when you exec `$ npm run dev` there is a prompt to help you to kill it;
 
+* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, in `html` file;
+
+* According the content in `package.json`, replace `@process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
+
 **-`npm run build`-**
 
 * Use `process.env.NODE_ENV === 'production'` to condition your code effect in development or production;
 
-* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, when `$ npm run build`;
+* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, in `html` file;
 
-* Include the file which is require with `inline` attribute in HTML;
+* According the content in `package.json`, replace `@process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
+
+* Use `ejs` template to inject source in `html`;
 
 **-`npm run build js`-**
 
@@ -94,6 +99,14 @@
  * @libraryTarget umd
  */
 ```
+
+### Plugin
+
+* [postcss](https://github.com/postcss/postcss)
+* [extract-text-webpack-plugin](https://github.com/webpack/extract-text-webpack-plugin)
+* [html-webpack-plugin](https://github.com/ampedandwired/html-webpack-plugin)
+* [html-replace-webpack-plugin](https://github.com/iminif/html-replace-webpack-plugin)
+* [html-webpack-inline-source-plugin](https://github.com/DustinJackson/html-webpack-inline-source-plugin)
 
 ## License
 
