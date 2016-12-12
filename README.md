@@ -1,3 +1,8 @@
+[![bitHound Overall Score](https://www.bithound.io/github/lixinliang/generator-web/badges/score.svg)](https://www.bithound.io/github/lixinliang/generator-web)
+[![bitHound Dependencies](https://www.bithound.io/github/lixinliang/generator-web/badges/dependencies.svg)](https://www.bithound.io/github/lixinliang/generator-web/master/dependencies/npm)
+[![bitHound Dev Dependencies](https://www.bithound.io/github/lixinliang/generator-web/badges/devDependencies.svg)](https://www.bithound.io/github/lixinliang/generator-web/master/dependencies/npm)
+[![bitHound Code](https://www.bithound.io/github/lixinliang/generator-web/badges/code.svg)](https://www.bithound.io/github/lixinliang/generator-web)
+
 # generator-web
 
 > 🎉A simple webpack generator.
