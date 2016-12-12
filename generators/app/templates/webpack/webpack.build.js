@@ -1,14 +1,28 @@
 'use strict';
 
+let fs = require('fs');
 let path = require('path');
+let fse = require('fs-extra');
 let moment = require('moment');
 let webpack = require('webpack');
-let Profile = require('./webpack.profile.js');
-let ExtractText = require('extract-text-webpack-plugin');
+let autoprefixer = require('autoprefixer');
+let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
 
-const alias = {};
+let HtmlWebpackPlugin = require('html-webpack-plugin');
+let HtmlReplaceWebpackPlugin = require('html-replace-webpack-plugin');
+let HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin');
+
 const entry = require('./webpack.entry.json');
 const packageJson = require('../package.json');
+
+const alias = {};
+const imageSize = 10240;
+const sourcePath = path.join(__dirname, '../src');
+const constant = {
+    NODE_ENV : 'production',
+    NAME : packageJson.name,
+    VERSION : packageJson.version,
+};
 
 const banner =
 `@ProjectName ${ packageJson.name }
@@ -16,15 +30,34 @@ const banner =
 @Author ${ packageJson.author.name }(${ packageJson.author.url })
 @Update ${ moment().format('YYYY-MM-DD h:mm:ss a') }`;
 
-const imageSize = 10240;
+process.argv.forEach(( param ) => {
+    if (/^--/.test(param)) {
+        let temp = param.slice(2).split('=');
+        let key = temp[0];
+        let value = temp[1] || true;
+        process.argv[key] = value;
+    }
+});
 
-module.exports = {
+let config = {
     entry,
-    output : {
-        path : './dist/js/',
-        filename : '[name].js',
-    },
-    extensions : ['.vue', '.js', '.json', '.scss', '.html'],
+    output : (() => {
+        if (process.argv.build == 'js') {
+            return {
+                path : './dist/',
+                filename : `[name]${ process.argv.uglify ? '.min' : '' }.js`,
+                library : process.argv.library,
+                libraryTarget : process.argv.libraryTarget,
+            };
+        } else {
+            return {
+                path : './dist/',
+                filename : 'js/[name].js',
+                publicPath : '',
+            };
+        }
+    })(),
+    extensions : ['.vue', '.js', '.json', '.scss'],
     resolve : {
         alias,
     },
@@ -35,20 +68,16 @@ module.exports = {
                 loader : 'vue',
             },
             {
-                test : /\.html$/,
-                loader : 'vue-html',
-            },
-            {
                 test : /\.(png|jpg|gif|svg)$/,
                 loader : `url?limit=${ imageSize }&name=../img/[name].[ext]?[hash]`,
             },
             {
                 test : /\.css$/,
-                loader : ExtractText.extract('style', 'css'),
+                loader : process.argv.build == 'js' ? 'css!postcss' : ExtractTextWebpackPlugin.extract('style', 'css!postcss'),
             },
             {
                 test : /\.scss$/,
-                loader : ExtractText.extract('style', 'css?localIdentName=[local]___[hash:base64:5]!autoprefixer?browsers=last 2 version!sass'),
+                loader : process.argv.build == 'js' ? 'css!postcss!sass' : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
             },
             {
                 test : /\.js$/,
@@ -63,54 +92,81 @@ module.exports = {
         ],
     },
     plugins : [
-        new ExtractText('../css/[name].css'),
-        new webpack.Profile(),
-        new webpack.DefinePlugin({
-            'process.env': {
-                NODE_ENV : '"production"',
-            },
-        }),
-        new webpack.optimize.UglifyJsPlugin({
+        new webpack.DefinePlugin((() => {
+            let result = {};
+            Object.keys(constant).forEach(( key ) => {
+                result[key] = JSON.stringify(constant[key]);
+            });
+            return {
+                'process.env' : result,
+            };
+        })()),
+        new webpack.BannerPlugin(banner),
+    ],
+    vue : {
+        loaders : {
+            sass : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
+            scss : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
+        },
+    },
+    postcss () {
+        return [autoprefixer({ browsers : ['last 2 versions'] })];
+    },
+};
+
+if (process.argv.build == 'js') {
+    if (process.argv.uglify) {
+        config.plugins.unshift(new webpack.optimize.UglifyJsPlugin({
             compress : {
                 warnings : false,
             },
             output : {
                 comments : false,
             },
-        }),
-        new webpack.BannerPlugin(banner),
-    ],
-    vue : {
-        loaders : {
-            sass : ExtractText.extract('style', 'css!autoprefixer?browsers=last 2 version!sass?indentedSyntax'),
-            scss : ExtractText.extract('style', 'css!autoprefixer?browsers=last 2 version!sass'),
+        }));
+    }
+} else {
+    config.plugins.unshift(new webpack.optimize.UglifyJsPlugin({
+        compress : {
+            warnings : false,
+        },
+        output : {
+            comments : false,
+        },
+    }));
+    config.plugins.push(new ExtractTextWebpackPlugin('css/[name].css'));
+    fs.readdirSync(sourcePath).forEach(( filename ) => {
+        if (/\.appcache$/.test(filename)) {
+            config.plugins.push(new HtmlWebpackPlugin({
+                minify : false,
+                inject : false,
+                filename,
+                template : path.join(sourcePath, filename),
+            }));
         }
-    },
-};
-
-process.argv.forEach(( param ) => {
-    if (/^--/.test(param)) {
-        let temp = param.slice(2).split('=');
-        let key = temp[0];
-        let value = temp[1] || true;
-        process.argv[key] = value;
-    }
-});
-if (process.argv.build == 'js') {
-    if (process.argv.uglify) {
-        module.exports.plugins.shift();
-    } else {
-        module.exports.plugins.splice(3, 1);
-        module.exports.plugins.shift();
-    }
-    let loaders = module.exports.module.loaders;
-    loaders[3].loaders = ['css', 'autoprefixer'];
-    loaders[4].loaders = ['css', 'autoprefixer', 'sass'];
-    loaders[3].loader = loaders[4].loader = void 0;
-    module.exports.output = {
-        path : './dist/',
-        filename : `[name]${ process.argv.uglify ? '.min' : '' }.js`,
-        library : process.argv.library,
-        libraryTarget : process.argv.libraryTarget,
-    };
+        if (/\.html$/.test(filename)) {
+            let template = path.join(sourcePath, filename);
+            let ejs = path.join(template, '..', `${ path.basename(filename, '.html') }.ejs`);
+            if (fs.existsSync(ejs)) {
+                template = ejs;
+            }
+            config.plugins.push(new HtmlWebpackPlugin({
+                minify : false,
+                inject : false,
+                filename,
+                template,
+            }));
+        }
+    });
+    let result = [];
+    Object.keys(constant).forEach(( key ) => {
+        result.push({
+            pattern : `@${ key }`,
+            replacement : constant[key],
+        });
+    });
+    config.plugins.push(new HtmlReplaceWebpackPlugin(result));
+    config.plugins.push(new HtmlWebpackInlineSourcePlugin());
 }
+
+module.exports = config;
