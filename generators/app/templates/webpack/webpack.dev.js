@@ -2,21 +2,27 @@
 
 let path = require('path');
 let webpack = require('webpack');
-let ExtractText = require('extract-text-webpack-plugin');
+let autoprefixer = require('autoprefixer');
+let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
+
+const entry = require('./webpack.entry.json');
+const packageJson = require('../package.json');
 
 const alias = {};
-const entry = require('./webpack.entry.json');
-
 const imageSize = 10240;
+const constant = {
+    NAME : packageJson.name,
+    VERSION : packageJson.version,
+};
 
-module.exports = {
+let config = {
     devtool : '#source-map',
     entry,
     output : {
         filename : 'js/[name].js',
         publicPath : '',
     },
-    extensions : ['.vue', '.js', '.json', '.scss', '.html'],
+    extensions : ['.vue', '.js', '.json', '.scss'],
     resolve : {
         alias,
     },
@@ -27,20 +33,16 @@ module.exports = {
                 loader : 'vue',
             },
             {
-                test : /\.html$/,
-                loader : 'vue-html',
-            },
-            {
                 test : /\.(png|jpg|gif|svg)$/,
                 loader : `url?limit=${ imageSize }&name=../img/[name].[ext]?[hash]`,
             },
             {
                 test : /\.css$/,
-                loader : ExtractText.extract('style', 'css'),
+                loader : ExtractTextWebpackPlugin.extract('style', 'css!postcss'),
             },
             {
                 test : /\.scss$/,
-                loader : ExtractText.extract('style', 'css?localIdentName=[local]___[hash:base64:5]!autoprefixer?browsers=last 2 version!sass'),
+                loader : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
             },
             {
                 test : /\.js$/,
@@ -55,12 +57,25 @@ module.exports = {
         ],
     },
     plugins : [
-        new ExtractText('css/[name].css'),
+        new ExtractTextWebpackPlugin('css/[name].css'),
+        new webpack.DefinePlugin((() => {
+            Object.keys(constant).forEach(( key ) => {
+                constant[key] = JSON.stringify(constant[key]);
+            });
+            return {
+                'process.env' : constant,
+            };
+        })()),
     ],
     vue : {
         loaders : {
-            sass : ExtractText.extract('style', 'css!autoprefixer?browsers=last 2 version!sass?indentedSyntax'),
-            scss : ExtractText.extract('style', 'css!autoprefixer?browsers=last 2 version!sass'),
+            sass : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
+            scss : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
         },
     },
+    postcss () {
+        return [autoprefixer({ browsers : ['last 2 versions'] })];
+    },
 };
+
+module.exports = config;
