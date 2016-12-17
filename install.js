@@ -1,7 +1,8 @@
 'use strict';
 
-let colors = require('colors');
+let path = require('path');
 let shell = require('shelljs');
+let colors = require('colors');
 
 shell.cd(`${ path.resolve('./generators/app/templates/') }`);
 
