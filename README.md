@@ -1,13 +1,17 @@
 [![bitHound Overall Score](https://www.bithound.io/github/lixinliang/generator-web/badges/score.svg)](https://www.bithound.io/github/lixinliang/generator-web)
 [![bitHound Dependencies](https://www.bithound.io/github/lixinliang/generator-web/badges/dependencies.svg)](https://www.bithound.io/github/lixinliang/generator-web/master/dependencies/npm)
-[![bitHound Dev Dependencies](https://www.bithound.io/github/lixinliang/generator-web/badges/devDependencies.svg)](https://www.bithound.io/github/lixinliang/generator-web/master/dependencies/npm)
 [![bitHound Code](https://www.bithound.io/github/lixinliang/generator-web/badges/code.svg)](https://www.bithound.io/github/lixinliang/generator-web)
 
 # generator-web
 
 > 🎉A simple webpack generator.
 
-## 简单、粗暴的web脚手架
+## 简单、粗暴的web脚手架，易扩展。
+
+### Env
+
+* Node - v4.7.0
+* npm - 2.15.11
 
 ### Install
 
@@ -60,6 +64,20 @@
 
 * `$ npm run build`
 
+### Dist
+
+* `$ npm run dist`
+* Dependency : `http-server`
+
+### Supported
+
+* `html`
+* `css`
+* `js`
+* `scss`
+* `vue`
+* `coffee`
+
 ### Feature
 
 **-`yo web`-**
@@ -78,19 +96,17 @@
 
 * If the net port is EADDRINUSE, when you exec `$ npm run dev` there is a prompt to help you to kill it;
 
-* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, in `html` file;
-
-* According the content in `package.json`, replace `@process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
+* According the content in `package.json`, replace `process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
 
 **-`npm run build`-**
 
 * Use `process.env.NODE_ENV === 'production'` to condition your code effect in development or production;
 
-* According the content in `package.json`, replace `@NAME` or `@VERSION` to correct value, in `html` file;
+* According the content in `package.json`, replace `<%= process.env.NAME %>` or `<%= process.env.VERSION %>` to correct value, in `html` file;
 
-* According the content in `package.json`, replace `@process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
+* According the content in `package.json`, replace `process.env.NAME` or `process.env.VERSION` to correct value, in `js` file;
 
-* Use `ejs` template to inject source in `html`;
+* Inject the file source which is require with `inline` attribute in HTML;
 
 **-`npm run build js`-**
 
@@ -104,14 +120,6 @@
  * @libraryTarget umd
  */
 ```
-
-### Plugin
-
-* [postcss](https://github.com/postcss/postcss)
-* [extract-text-webpack-plugin](https://github.com/webpack/extract-text-webpack-plugin)
-* [html-webpack-plugin](https://github.com/ampedandwired/html-webpack-plugin)
-* [html-replace-webpack-plugin](https://github.com/iminif/html-replace-webpack-plugin)
-* [html-webpack-inline-source-plugin](https://github.com/DustinJackson/html-webpack-inline-source-plugin)
 
 ## License
 
