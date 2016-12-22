@@ -6,11 +6,11 @@ let fse = require('fs-extra');
 let moment = require('moment');
 let webpack = require('webpack');
 let autoprefixer = require('autoprefixer');
-let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
-
+let CopyWebpackPlugin = require('copy-webpack-plugin');
 let HtmlWebpackPlugin = require('html-webpack-plugin');
-let HtmlReplaceWebpackPlugin = require('html-replace-webpack-plugin');
-let HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin');
+let CleanWebpackPlugin = require('clean-webpack-plugin');
+let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
+let HtmlInlineSourceWebpackPlugin = require('html-inline-source-webpack-plugin');
 
 const entry = require('./webpack.entry.json');
 const packageJson = require('../package.json');
@@ -57,7 +57,7 @@ let config = {
             };
         }
     })(),
-    extensions : ['.vue', '.js', '.json', '.scss'],
+    extensions : ['.vue', '.js', '.coffee', '.json', '.scss'],
     resolve : {
         alias,
     },
@@ -69,7 +69,7 @@ let config = {
             },
             {
                 test : /\.(png|jpg|gif|svg)$/,
-                loader : `url?limit=${ imageSize }&name=../img/[name].[ext]?[hash]`,
+                loader : `url?limit=${ imageSize }&name=${ process.argv.build == 'js' ? '../' : '' }img/[name].[ext]?[hash]`,
             },
             {
                 test : /\.css$/,
@@ -88,6 +88,14 @@ let config = {
                     // plugins : ['transform-remove-strict-mode'],
                     // plugins: ['transform-runtime'],
                 },
+            },
+            {
+                test : /\.coffee/,
+                loader : 'coffee',
+            },
+            {
+                test : /\.(coffee\.md|litcoffee)$/,
+                loader : 'coffee?literate',
             },
         ],
     },
@@ -114,9 +122,10 @@ let config = {
     },
 };
 
+let plugins = config.plugins;
 if (process.argv.build == 'js') {
     if (process.argv.uglify) {
-        config.plugins.unshift(new webpack.optimize.UglifyJsPlugin({
+        plugins.unshift(new webpack.optimize.UglifyJsPlugin({
             compress : {
                 warnings : false,
             },
@@ -124,9 +133,13 @@ if (process.argv.build == 'js') {
                 comments : false,
             },
         }));
+    } else {
+        plugins.unshift(new CleanWebpackPlugin(['dist'], {
+            root : path.join(__dirname, '..'),
+        }));
     }
 } else {
-    config.plugins.unshift(new webpack.optimize.UglifyJsPlugin({
+    plugins.unshift(new webpack.optimize.UglifyJsPlugin({
         compress : {
             warnings : false,
         },
@@ -134,23 +147,42 @@ if (process.argv.build == 'js') {
             comments : false,
         },
     }));
-    config.plugins.push(new ExtractTextWebpackPlugin('css/[name].css'));
-    fs.readdirSync(sourcePath).forEach(( filename ) => {
-        if (/\.appcache$/.test(filename)) {
-            config.plugins.push(new HtmlWebpackPlugin({
-                minify : false,
-                inject : false,
-                filename,
-                template : path.join(sourcePath, filename),
-            }));
-        }
-        if (/\.html$/.test(filename)) {
-            let template = path.join(sourcePath, filename);
-            let ejs = path.join(template, '..', `${ path.basename(filename, '.html') }.ejs`);
-            if (fs.existsSync(ejs)) {
-                template = ejs;
+    plugins.unshift(new CopyWebpackPlugin((() => {
+        let result = [];
+        fs.readdirSync(sourcePath).forEach(( filename ) => {
+            let file = path.join(sourcePath, filename);
+            if (filename[0] === '.') {
+                return;
             }
-            config.plugins.push(new HtmlWebpackPlugin({
+            let stats = fs.statSync(file);
+            if (stats.isDirectory()) {
+                if (filename == 'entry') {
+                    return;
+                }
+            }
+            if (stats.isFile()) {
+                if (path.extname(file) == '.html') {
+                    return;
+                }
+                if (path.extname(file) == '.appcache') {
+                    return;
+                }
+            }
+            result.push({
+                from : file,
+                to : filename,
+            });
+        });
+        return result;
+    })()));
+    plugins.unshift(new CleanWebpackPlugin(['dist'], {
+        root : path.join(__dirname, '..'),
+    }));
+    plugins.push(new ExtractTextWebpackPlugin('css/[name].css'));
+    fs.readdirSync(sourcePath).forEach(( filename ) => {
+        let template = path.join(sourcePath, filename);
+        if (/\.(appcache|html)$/.test(filename)) {
+            plugins.push(new HtmlWebpackPlugin({
                 minify : false,
                 inject : false,
                 filename,
@@ -158,15 +190,7 @@ if (process.argv.build == 'js') {
             }));
         }
     });
-    let result = [];
-    Object.keys(constant).forEach(( key ) => {
-        result.push({
-            pattern : `@${ key }`,
-            replacement : constant[key],
-        });
-    });
-    config.plugins.push(new HtmlReplaceWebpackPlugin(result));
-    config.plugins.push(new HtmlWebpackInlineSourcePlugin());
+    plugins.push(new HtmlInlineSourceWebpackPlugin());
 }
 
 module.exports = config;
