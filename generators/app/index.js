@@ -175,7 +175,7 @@ module.exports = generator.Base.extend({
      * [Install Stage] Install node_modules and you can use Ctrl+C to leave.
      */
     install () {
-        if (task.copy_package_json) {
+        if (task.overwrite_src) {
             del(['src/**/.gitignore','src/**/.npmignore']);
         }
         if (task.install_node_modules) {
