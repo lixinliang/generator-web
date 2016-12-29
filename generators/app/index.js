@@ -4,8 +4,6 @@ let fs = require('fs');
 let del = require('del');
 let path = require('path');
 let fse = require('fs-extra');
-let colors = require('colors');
-let shell = require('shelljs');
 let generator = require('yeoman-generator');
 
 let log = console.log;
@@ -48,7 +46,6 @@ module.exports = generator.Base.extend({
             task.install_node_modules = false;
         }
         let done = this.async();
-        let timestamp = +new Date();
         let questions = [];
         if (task.copy_package_json) {
             questions.push({
@@ -135,10 +132,10 @@ module.exports = generator.Base.extend({
             fs.readdirSync(templatePath).forEach(( filename ) => {
                 let stats = fs.statSync(path.join(templatePath, filename));
                 if (stats.isFile()) {
-                    if (filename == 'package.json') {
+                    if (filename === 'package.json') {
                         return;
                     }
-                    if (filename == '.DS_Store') {
+                    if (filename === '.DS_Store') {
                         return;
                     }
                     del(filename);
@@ -148,13 +145,13 @@ module.exports = generator.Base.extend({
                     });
                 }
                 if (stats.isDirectory()) {
-                    if (filename == 'src') {
+                    if (filename === 'src') {
                         return;
                     }
-                    if (filename == 'webpack') {
+                    if (filename === 'webpack') {
                         return;
                     }
-                    if (filename == 'node_modules') {
+                    if (filename === 'node_modules') {
                         return;
                     }
                     del(filename);
@@ -192,7 +189,6 @@ module.exports = generator.Base.extend({
                 },
             ]).then(( answers ) => {
                 if (answers.install_node_modules == choices[0]) {
-                    // shell.exec(`ln -s ${ path.join(__dirname, './templates/node_modules') } node_modules`);
                     fs.symlinkSync(path.join(__dirname, './templates/node_modules'), 'node_modules');
                     log('> 初始化已完成');
                     process.exit(1);
