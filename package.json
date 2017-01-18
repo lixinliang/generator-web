@@ -13,9 +13,7 @@
     "email": "393464140@qq.com",
     "url": "https://github.com/lixinliang"
   },
-  "scripts": {
-    "install": "node install.js"
-  },
+  "scripts": {},
   "files": [
     "generators"
   ],
