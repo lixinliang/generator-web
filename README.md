@@ -3,8 +3,7 @@
 [![bitHound Code](https://www.bithound.io/github/lixinliang/generator-web/badges/code.svg)](https://www.bithound.io/github/lixinliang/generator-web)
 
 # generator-web
-
-> 🎉A simple webpack generator.
+> 🎉A simple web generator.
 
 ## 简单、粗暴的web脚手架，易扩展。
 
@@ -13,21 +12,14 @@
 * Node - v4.7.0
 * npm - 2.15.11
 
-### Install
+### Installation
 
 * Clone or download.
 * `$ cd generator-web`
 * `$ npm install`
     * If install fail, please try again later.
-* `$ npm link`
-    * This step will install node_modules in `generator-web/generators/app/templates/`, if install fail, please try again manually.
 
-### Custom
-
-* `$ open generators/app/templates/package.json`
-* Custom your `package.json`, such as change the author.
-
-### Use
+### Usage
 
 * `$ yo web`
 * Follow the guide.
@@ -68,6 +60,11 @@
 
 * `$ npm run dist`
 * Dependency : `http-server`
+
+### Custom
+
+* `$ open generators/app/templates/package.json`
+* Custom your `package.json`, such as change the author.
 
 ### Supported
 
