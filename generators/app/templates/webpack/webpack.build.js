@@ -9,6 +9,7 @@ let autoprefixer = require('autoprefixer');
 let CopyWebpackPlugin = require('copy-webpack-plugin');
 let HtmlWebpackPlugin = require('html-webpack-plugin');
 let CleanWebpackPlugin = require('clean-webpack-plugin');
+let UnminifiedWebpackPlugin = require('unminified-webpack-plugin');
 let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
 let HtmlInlineSourceWebpackPlugin = require('html-inline-source-webpack-plugin');
 
@@ -45,7 +46,7 @@ let config = {
         if (process.argv.build == 'js') {
             return {
                 path : './dist/',
-                filename : `[name]${ process.argv.uglify ? '.min' : '' }.js`,
+                filename : `[name].min.js`,
                 library : process.argv.library,
                 libraryTarget : process.argv.libraryTarget,
             };
@@ -124,20 +125,18 @@ let config = {
 
 let plugins = config.plugins;
 if (process.argv.build == 'js') {
-    if (process.argv.uglify) {
-        plugins.unshift(new webpack.optimize.UglifyJsPlugin({
-            compress : {
-                warnings : false,
-            },
-            output : {
-                comments : false,
-            },
-        }));
-    } else {
-        plugins.unshift(new CleanWebpackPlugin(['dist'], {
-            root : path.join(__dirname, '..'),
-        }));
-    }
+    plugins.unshift(new UnminifiedWebpackPlugin());
+    plugins.unshift(new webpack.optimize.UglifyJsPlugin({
+        compress : {
+            warnings : false,
+        },
+        output : {
+            comments : false,
+        },
+    }));
+    plugins.unshift(new CleanWebpackPlugin(['dist'], {
+        root : path.join(__dirname, '..'),
+    }));
 } else {
     plugins.unshift(new webpack.optimize.UglifyJsPlugin({
         compress : {
