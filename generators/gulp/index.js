@@ -157,19 +157,19 @@ module.exports = generator.extend({
         ]).then(( answers ) => {
             if (answers.install_node_modules == choices[0]) {
                 fs.symlinkSync(path.join(__dirname, './templates/node_modules'), 'node_modules');
-                log('> 初始化已完成');
-                process.exit(1);
             } else {
                 this.installDependencies({
                     npm : true,
                     bower : false,
                     skipInstall : false,
                     callback () {
-                        log('> 初始化已完成');
-                        process.exit(1);
+
                     }
                 });
             }
+        }).then(() => {
+            this.log('> 初始化已完成');
+            process.exit(1);
         });
     },
 });
