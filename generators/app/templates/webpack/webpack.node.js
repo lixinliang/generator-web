@@ -35,8 +35,6 @@ let start = () => {
         if (buildjs) {
             step1().then(step4).then(step5).then(( option ) => {
                 return `webpack --progress --colors --config ./webpack/webpack.build.js${ option }`;
-            }).then(step2).then(( cmd ) => {
-                return `${ cmd } --uglify`;
             }).then(step2).then(() => {
                 console.log('build complete!'.green);
             }).catch((err) => {
