@@ -2,61 +2,80 @@
 
 let fs = require('fs');
 let chalk = require('chalk');
-let generator = require('yeoman-generator');
+let Base = require('yeoman-generator');
 
-module.exports = generator.extend({
+let installDependencies = false;
+let installSharedNodeModules = false;
+
+module.exports = class Generator extends Base {
+    constructor ( args, options ) {
+        super(args, options);
+    }
     /**
-     * [Writing Stage] Create files.
-     */
+    * [exists] shortcut
+    * @param  {String} filename filename
+    * @return {Boolean} boolean boolean
+    */
+    exists ( filename ) {
+        if (!filename) {
+            return;
+        }
+        return fs.existsSync(this.destinationPath(filename));
+    }
+    /**
+    * [copy] shortcut
+    * @param {String} filename filename
+    * @param {Object|String} option copyTpl or write file
+    */
+    copy ( filename, option ) {
+        if (!filename) {
+            return;
+        }
+        if (typeof option == 'string') {
+            this.fs.write(this.destinationPath(filename), option);
+            return;
+        }
+        if (typeof option == 'object' && option) {
+            this.fs.copyTpl(this.templatePath(filename), this.destinationPath(filename), option);
+            return;
+        }
+        this.fs.copy(this.templatePath(filename), this.destinationPath(filename), {
+            globOptions : {
+                dot : 'npmignore',
+            },
+        });
+    }
+    /**
+    * [confirm]
+    * @param  {String} message message
+    * @return {Promise} promise promise
+    * @return {Boolean} resolve boolean
+    */
+    confirm ( message ) {
+        if (!message) {
+            return;
+        }
+        return this.prompt([
+            {
+                type : 'confirm',
+                name : 'boolean',
+                default : false,
+                message,
+            },
+        ]).then(( answers ) => {
+            return answers.boolean;
+        });
+    }
+    /**
+    * [Writing Stage] Create files.
+    */
     writing () {
         let done = this.async();
-        /**
-         * [exists] shortcut
-         * @param  {String} filename filename
-         * @return {Boolean} boolean boolean
-         */
-        let exists = ( filename ) => {
-            return fs.existsSync(this.destinationPath(filename));
-        };
-        /**
-         * [copy] shortcut
-         * @param {String} filename filename
-         * @param {Object|String} option copyTpl or write file
-         */
-        let copy = ( filename, option ) => {
-            if (typeof option == 'string') {
-                this.fs.write(this.destinationPath(filename), option);
-                return;
-            }
-            if (typeof option == 'object' && option) {
-                this.fs.copyTpl(this.templatePath(filename), this.destinationPath(filename), option);
-                return;
-            }
-            this.fs.copy(this.templatePath(filename), this.destinationPath(filename));
-        };
-        /**
-         * [prompt]
-         * @param  {String} message message
-         * @return {Promise} promise promise
-         * @return {Boolean} resolve boolean
-         */
-        let prompt = ( message ) => {
-            return this.prompt([
-                {
-                    type : 'confirm',
-                    name : 'boolean',
-                    default : false,
-                    message,
-                },
-            ]).then(( answers ) => {
-                return answers.boolean;
-            });
-        };
         Promise.resolve().then(() => {
             let packageJson = this.fs.readJSON(this.templatePath('package.json'));
-            if (exists('package.json')) {
+            if (this.exists('package.json')) {
                 let devDependencies = packageJson.devDependencies;
-                return prompt(`Overwrite ${ chalk.green('package.json') }?`).then(( boolean ) => {
+                return this.confirm(`Overwrite ${ chalk.green('package.json') }?`).then(( boolean ) => {
                     if (boolean) {
                         let packageJson = this.fs.readJSON(this.destinationPath('package.json'));
                         packageJson.devDependencies = Object.assign(packageJson.devDependencies, devDependencies);
@@ -88,19 +107,19 @@ module.exports = generator.extend({
                 });
             }
         }).then(() => {
-            copy('gulpfile.js');
+            this.copy('gulpfile.js');
         }).then(() => {
-            if (exists('src')) {
-                return prompt(`Overwrite ${ chalk.green('src') }?`).then(( boolean ) => {
+            if (this.exists('src')) {
+                return this.confirm(`Overwrite ${ chalk.green('src') }?`).then(( boolean ) => {
                     if (boolean) {
-                        copy('src');
+                        this.copy('src');
                     }
                 });
             } else {
-                copy('src');
+                this.copy('src');
             }
         }).then(() => {
-            return prompt(`Create ${ chalk.green('rest file') }?`).then(( boolean ) => {
+            return this.confirm(`Create ${ chalk.green('rest file') }?`).then(( boolean ) => {
                 if (boolean) {
                     fs.readdirSync(this.templatePath('')).forEach(( filename ) => {
                         if (filename == '.DS_Store') {
@@ -125,51 +144,73 @@ module.exports = generator.extend({
                             return;
                         }
                         if (filename == 'README.md') {
-                            copy(filename, `# ${ this.appname }`);
+                            this.copy(filename, `# ${ this.appname }`);
                             return;
                         }
                         if (filename == 'LICENSE') {
-                            copy(filename, { year : new Date().getFullYear() });
+                            this.copy(filename, { year : new Date().getFullYear() });
                             return;
                         }
-                        copy(filename);
+                        this.copy(filename);
                     });
                 }
             });
-        }).then(done);
-    },
-    /**
-     * [Install Stage] Install node_modules.
-     */
-    install () {
-        this.fs.delete('src/**/placeholder');
-        let choices = [
-            'Link to the shared node_modules',
-            'Install here',
-        ];
-        this.prompt([
-            {
-                type : 'list',
-                name : 'install_node_modules',
-                message : 'Link to shared node_modules or Install node_modules here?',
-                choices,
-            },
-        ]).then(( answers ) => {
-            if (answers.install_node_modules == choices[0]) {
-                fs.symlinkSync(path.join(__dirname, './templates/node_modules'), 'node_modules');
-            } else {
-                this.installDependencies({
-                    npm : true,
-                    bower : false,
-                    skipInstall : false,
-                    callback () {
-
+        }).then(() => {
+            if (!this.exists('node_modules')) {
+                let choices = [
+                    'Link to the shared node_modules',
+                    'Install here',
+                ];
+                return this.prompt([
+                    {
+                        type : 'list',
+                        name : 'install_node_modules',
+                        message : 'Link to shared node_modules or Install node_modules here?',
+                        choices,
+                    },
+                ]).then(( answers ) => {
+                    if (answers.install_node_modules == choices[0]) {
+                        if (fs.existsSync(this.templatePath('node_modules'))) {
+                            fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                        } else {
+                            this.log('> shared node_modules is installing...');
+                            installSharedNodeModules = true;
+                        }
+                    } else {
+                        installDependencies = true;
                     }
                 });
             }
         }).then(() => {
-            this.log('> 初始化已完成');
-            process.exit(1);
-        });
-    },
-});
+            this.fs.delete('src/**/.npmignore');
+        }).then(done);
+    }
+    /**
+    * [Install Stage] Install node_modules.
+    */
+    install () {
+        let finish = () => {
+            this.log(`> node_modules ${ chalk.green('√') }`);
+            this.log('> finished.');
+        };
+        if (installSharedNodeModules) {
+            this.runInstall('npm', null, {}, () => {
+                fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                finish();
+            }, {
+                cwd : this.templatePath(),
+            });
+            return;
+        }
+        if (installDependencies) {
+            this.installDependencies({
+                npm : true,
+                bower : false,
+                skipInstall : false,
+                callback : finish,
+            });
+            return;
+        }
+        finish();
+    }
+};
