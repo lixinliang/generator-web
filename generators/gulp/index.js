@@ -1,6 +1,7 @@
 'use strict';
 
 let fs = require('fs');
+let path = require('path');
 let chalk = require('chalk');
 let Base = require('yeoman-generator');
 
@@ -70,6 +71,7 @@ module.exports = class Generator extends Base {
     * [Writing Stage] Create files.
     */
     writing () {
+        let appname = path.basename(this.destinationRoot());
         let done = this.async();
         Promise.resolve().then(() => {
             let packageJson = this.fs.readJSON(this.templatePath('package.json'));
@@ -87,7 +89,7 @@ module.exports = class Generator extends Base {
                     {
                         name : 'name',
                         message : 'Name',
-                        default : this.appname || 'Project',
+                        default : appname || 'Project',
                     },
                     {
                         name : 'version',
@@ -144,7 +146,7 @@ module.exports = class Generator extends Base {
                             return;
                         }
                         if (filename == 'README.md') {
-                            this.copy(filename, `# ${ this.appname }`);
+                            this.copy(filename, `# ${ appname }`);
                             return;
                         }
                         if (filename == 'LICENSE') {
