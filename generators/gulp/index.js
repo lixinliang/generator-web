@@ -5,8 +5,7 @@ let path = require('path');
 let chalk = require('chalk');
 let Base = require('yeoman-generator');
 
-let installDependencies = false;
-let installSharedNodeModules = false;
+const workflow = 'gulpfile.js';
 
 module.exports = class Generator extends Base {
     constructor ( args, options ) {
@@ -18,10 +17,9 @@ module.exports = class Generator extends Base {
     * @return {Boolean} boolean boolean
     */
     exists ( filename ) {
-        if (!filename) {
-            return;
+        if (filename) {
+            return fs.existsSync(this.destinationPath(filename));
         }
-        return fs.existsSync(this.destinationPath(filename));
     }
     /**
     * [copy] shortcut
@@ -29,22 +27,21 @@ module.exports = class Generator extends Base {
     * @param {Object|String} option copyTpl or write file
     */
     copy ( filename, option ) {
-        if (!filename) {
-            return;
+        if (filename) {
+            if (typeof option == 'string') {
+                this.fs.write(this.destinationPath(filename), option);
+                return;
+            }
+            if (typeof option == 'object' && option) {
+                this.fs.copyTpl(this.templatePath(filename), this.destinationPath(filename), option);
+                return;
+            }
+            this.fs.copy(this.templatePath(filename), this.destinationPath(filename), {
+                globOptions : {
+                    dot : 'npmignore',
+                },
+            });
         }
-        if (typeof option == 'string') {
-            this.fs.write(this.destinationPath(filename), option);
-            return;
-        }
-        if (typeof option == 'object' && option) {
-            this.fs.copyTpl(this.templatePath(filename), this.destinationPath(filename), option);
-            return;
-        }
-        this.fs.copy(this.templatePath(filename), this.destinationPath(filename), {
-            globOptions : {
-                dot : 'npmignore',
-            },
-        });
     }
     /**
     * [confirm]
@@ -53,26 +50,25 @@ module.exports = class Generator extends Base {
     * @return {Boolean} resolve boolean
     */
     confirm ( message ) {
-        if (!message) {
-            return;
+        if (message) {
+            return this.prompt([
+                {
+                    type : 'confirm',
+                    name : 'boolean',
+                    default : false,
+                    message,
+                },
+            ]).then(( answers ) => {
+                return answers.boolean;
+            });
         }
-        return this.prompt([
-            {
-                type : 'confirm',
-                name : 'boolean',
-                default : false,
-                message,
-            },
-        ]).then(( answers ) => {
-            return answers.boolean;
-        });
     }
     /**
     * [Writing Stage] Create files.
     */
     writing () {
-        let appname = path.basename(this.destinationRoot());
         let done = this.async();
+        let appname = path.basename(this.destinationRoot());
         Promise.resolve().then(() => {
             let packageJson = this.fs.readJSON(this.templatePath('package.json'));
             if (this.exists('package.json')) {
@@ -109,7 +105,7 @@ module.exports = class Generator extends Base {
                 });
             }
         }).then(() => {
-            this.copy('gulpfile.js');
+            this.copy(workflow);
         }).then(() => {
             if (this.exists('src')) {
                 return this.confirm(`Overwrite ${ chalk.green('src') }?`).then(( boolean ) => {
@@ -139,7 +135,7 @@ module.exports = class Generator extends Base {
                         if (filename == 'src') {
                             return;
                         }
-                        if (filename == 'gulpfile.js') {
+                        if (filename == workflow) {
                             return;
                         }
                         if (filename == 'node_modules') {
@@ -158,32 +154,6 @@ module.exports = class Generator extends Base {
                 }
             });
         }).then(() => {
-            if (!this.exists('node_modules')) {
-                let choices = [
-                    'Link to the shared node_modules',
-                    'Install here',
-                ];
-                return this.prompt([
-                    {
-                        type : 'list',
-                        name : 'install_node_modules',
-                        message : 'Link to shared node_modules or Install node_modules here?',
-                        choices,
-                    },
-                ]).then(( answers ) => {
-                    if (answers.install_node_modules == choices[0]) {
-                        if (fs.existsSync(this.templatePath('node_modules'))) {
-                            fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
-                        } else {
-                            this.log('> shared node_modules is installing...');
-                            installSharedNodeModules = true;
-                        }
-                    } else {
-                        installDependencies = true;
-                    }
-                });
-            }
-        }).then(() => {
             this.fs.delete('src/**/.npmignore');
         }).then(done);
     }
@@ -195,24 +165,43 @@ module.exports = class Generator extends Base {
             this.log(`> node_modules ${ chalk.green('√') }`);
             this.log('> finished.');
         };
-        if (installSharedNodeModules) {
-            this.runInstall('npm', null, {}, () => {
-                fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
-                finish();
-            }, {
-                cwd : this.templatePath(),
+        if (this.exists('node_modules')) {
+            finish();
+        } else {
+            let choices = [
+                'Link to the shared node_modules',
+                'Install here',
+            ];
+            return this.prompt([
+                {
+                    type : 'list',
+                    name : 'install_node_modules',
+                    message : 'Link to shared node_modules or Install node_modules here?',
+                    choices,
+                },
+            ]).then(( answers ) => {
+                if (answers.install_node_modules == choices[0]) {
+                    if (fs.existsSync(this.templatePath('node_modules'))) {
+                        fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                        finish();
+                    } else {
+                        this.log('> shared node_modules is installing...');
+                        this.runInstall('npm', null, {}, () => {
+                            fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                            finish();
+                        }, {
+                            cwd : this.templatePath(),
+                        });
+                    }
+                } else {
+                    this.installDependencies({
+                        npm : true,
+                        bower : false,
+                        skipInstall : false,
+                        callback : finish,
+                    });
+                }
             });
-            return;
         }
-        if (installDependencies) {
-            this.installDependencies({
-                npm : true,
-                bower : false,
-                skipInstall : false,
-                callback : finish,
-            });
-            return;
-        }
-        finish();
     }
 };
