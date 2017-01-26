@@ -1,186 +1,178 @@
 'use strict';
 
 let fs = require('fs');
-let del = require('del');
 let path = require('path');
-let fse = require('fs-extra');
-let generator = require('yeoman-generator');
+let chalk = require('chalk');
+let Base = require('yeoman-generator');
 
-let log = console.log;
+const workflow = 'webpack';
 
-/**
- * [Task List]
- */
-let task = {
-    overwrite_src : true,
-    copy_rest_files : false,
-    overwrite_webpack : true,
-    copy_package_json : true,
-    install_node_modules : true,
-    overwrite_package_json_dev_dependencies : false,
-};
-
-let basicPath = process.cwd();
-let templatePath = path.join(__dirname, 'templates');
-let packageJson = fse.readJsonSync(path.join(templatePath, 'package.json'), { throws : false });
-
-module.exports = generator.Base.extend({
+module.exports = class Generator extends Base {
+    constructor ( args, options ) {
+        super(args, options);
+    }
     /**
-     * [Prompting Stage] Inquire questions, include the project name, version and description.
-     */
-    prompting () {
-        if (fs.existsSync(path.join(basicPath, 'package.json'))) {
-            log('> package.json', '√'.green);
-            task.copy_package_json = false;
+    * [exists] shortcut
+    * @param  {String} filename filename
+    * @return {Boolean} boolean boolean
+    */
+    exists ( filename ) {
+        if (filename) {
+            return fs.existsSync(this.destinationPath(filename));
         }
-        if (fs.existsSync(path.join(basicPath, 'src'))) {
-            log('> src', '√'.green);
-            task.overwrite_src = false;
-        }
-        if (fs.existsSync(path.join(basicPath, 'webpack'))) {
-            log('> webpack', '√'.green);
-            task.overwrite_webpack = false;
-        }
-        if (fs.existsSync(path.join(basicPath, 'node_modules'))) {
-            log('> node_modules', '√'.green);
-            task.install_node_modules = false;
-        }
-        let done = this.async();
-        let questions = [];
-        if (task.copy_package_json) {
-            questions.push({
-                name : 'name',
-                message : 'Name',
-                default : path.basename(basicPath) || 'Project',
-            });
-            questions.push({
-                name : 'version',
-                message : 'Version',
-                default : '0.0.1',
-            });
-            questions.push({
-                name : 'description',
-                message : 'Description',
-                default : 'none',
-            });
-        } else {
-            questions.push({
-                type : 'confirm',
-                name : 'overwrite_package_json_dev_dependencies',
-                message : 'Whether to overwrite [package.json]',
-                default : false,
-            });
-        }
-        if (!task.overwrite_src) {
-            questions.push({
-                type : 'confirm',
-                name : 'overwrite_src',
-                message : 'Whether to overwrite [src]',
-                default : false,
-            });
-        }
-        if (!task.overwrite_webpack) {
-            questions.push({
-                type : 'confirm',
-                name : 'overwrite_webpack',
-                message : 'Whether to overwrite [webpack]',
-                default : true,
-            });
-        }
-        questions.push({
-            type : 'confirm',
-            name : 'copy_rest_files',
-            message : 'Whether to copy [rest files]',
-            default : false,
-        });
-        this.prompt(questions).then(( answers ) => {
-            if (task.copy_package_json) {
-                packageJson.name = answers.name;
-                packageJson.version = answers.version;
-                packageJson.description = answers.description;
-            } else {
-                task.overwrite_package_json_dev_dependencies = answers.overwrite_package_json_dev_dependencies;
+    }
+    /**
+    * [copy] shortcut
+    * @param {String} filename filename
+    * @param {Object|String} option copyTpl or write file
+    */
+    copy ( filename, option ) {
+        if (filename) {
+            if (typeof option == 'string') {
+                this.fs.write(this.destinationPath(filename), option);
+                return;
             }
-            task.overwrite_src = task.overwrite_src || answers.overwrite_src;
-            task.overwrite_webpack = task.overwrite_webpack || answers.overwrite_webpack;
-            task.copy_rest_files = answers.copy_rest_files;
-            done();
-        });
-    },
+            if (typeof option == 'object' && option) {
+                this.fs.copyTpl(this.templatePath(filename), this.destinationPath(filename), option);
+                return;
+            }
+            this.fs.copy(this.templatePath(filename), this.destinationPath(filename), {
+                globOptions : {
+                    dot : 'npmignore',
+                },
+            });
+        }
+    }
     /**
-     * [Writing Stage] Copy file.
-     */
+    * [confirm]
+    * @param  {String} message message
+    * @return {Promise} promise promise
+    * @return {Boolean} resolve boolean
+    */
+    confirm ( message ) {
+        if (message) {
+            return this.prompt([
+                {
+                    type : 'confirm',
+                    name : 'boolean',
+                    default : false,
+                    message,
+                },
+            ]).then(( answers ) => {
+                return answers.boolean;
+            });
+        }
+    }
+    /**
+    * [Writing Stage] Create files.
+    */
     writing () {
-        if (task.overwrite_package_json_dev_dependencies) {
-            let projectPackageJson = fse.readJsonSync(path.join(basicPath, 'package.json'), { throws : false });
-            let devDependencies = projectPackageJson.devDependencies || {};
-            for (let pack in packageJson.devDependencies) {
-                devDependencies[pack] = packageJson.devDependencies[pack];
+        let done = this.async();
+        let appname = path.basename(this.destinationRoot());
+        Promise.resolve().then(() => {
+            let packageJson = this.fs.readJSON(this.templatePath('package.json'));
+            if (this.exists('package.json')) {
+                let devDependencies = packageJson.devDependencies;
+                return this.confirm(`Overwrite ${ chalk.green('package.json') }?`).then(( boolean ) => {
+                    if (boolean) {
+                        let packageJson = this.fs.readJSON(this.destinationPath('package.json'));
+                        packageJson.devDependencies = Object.assign(packageJson.devDependencies, devDependencies);
+                        this.fs.writeJSON('package.json', packageJson);
+                    }
+                });
+            } else {
+                return this.prompt([
+                    {
+                        name : 'name',
+                        message : 'Name',
+                        default : appname || 'Project',
+                    },
+                    {
+                        name : 'version',
+                        message : 'Version',
+                        default : '0.0.1',
+                    },
+                    {
+                        name : 'description',
+                        message : 'Description',
+                        default : 'none',
+                    },
+                ]).then(( answers ) => {
+                    packageJson.name = answers.name;
+                    packageJson.version = answers.version;
+                    packageJson.description = answers.description;
+                    this.fs.writeJSON('package.json', packageJson);
+                });
             }
-            projectPackageJson.devDependencies = {};
-            Object.keys(devDependencies).sort(( packA, packB ) => {
-                return packA > packB ? 1 : -1;
-            }).forEach(( pack ) => {
-                projectPackageJson.devDependencies[pack] = devDependencies[pack];
-            });
-            packageJson = projectPackageJson;
-        }
-        if (task.copy_package_json || task.overwrite_package_json_dev_dependencies) {
-            fse.writeJsonSync('package.json', packageJson);
-        }
-        if (task.copy_rest_files) {
-            fs.readdirSync(templatePath).forEach(( filename ) => {
-                let stats = fs.statSync(path.join(templatePath, filename));
-                if (stats.isFile()) {
-                    if (filename === 'package.json') {
-                        return;
+        }).then(() => {
+            this.copy(workflow);
+        }).then(() => {
+            if (this.exists('src')) {
+                return this.confirm(`Overwrite ${ chalk.green('src') }?`).then(( boolean ) => {
+                    if (boolean) {
+                        this.copy('src');
                     }
-                    if (filename === '.DS_Store') {
-                        return;
-                    }
-                    del(filename);
-                    this.template(filename, filename, {
-                        name : packageJson.name,
-                        year : new Date().getFullYear(),
+                });
+            } else {
+                this.copy('src');
+            }
+        }).then(() => {
+            return this.confirm(`Create ${ chalk.green('rest file') }?`).then(( boolean ) => {
+                if (boolean) {
+                    fs.readdirSync(this.templatePath('')).forEach(( filename ) => {
+                        if (filename == '.DS_Store') {
+                            return;
+                        }
+                        if (filename == '.gitignore') {
+                            return;
+                        }
+                        if (filename == '.git') {
+                            return;
+                        }
+                        if (filename == 'package.json') {
+                            return;
+                        }
+                        if (filename == 'src') {
+                            return;
+                        }
+                        if (filename == workflow) {
+                            return;
+                        }
+                        if (filename == 'node_modules') {
+                            return;
+                        }
+                        if (filename == 'README.md') {
+                            this.copy(filename, `# ${ appname }`);
+                            return;
+                        }
+                        if (filename == 'LICENSE') {
+                            this.copy(filename, { year : new Date().getFullYear() });
+                            return;
+                        }
+                        this.copy(filename);
                     });
                 }
-                if (stats.isDirectory()) {
-                    if (filename === 'src') {
-                        return;
-                    }
-                    if (filename === 'webpack') {
-                        return;
-                    }
-                    if (filename === 'node_modules') {
-                        return;
-                    }
-                    del(filename);
-                    this.directory(filename, filename);
-                }
             });
-        }
-        if (task.overwrite_src) {
-            del('src/*');
-            this.directory('src', 'src');
-        }
-        if (task.overwrite_webpack) {
-            del('webpack/*');
-            this.directory('webpack', 'webpack');
-        }
-    },
+        }).then(() => {
+            this.fs.delete('src/**/.npmignore');
+        }).then(done);
+    }
     /**
-     * [Install Stage] Install node_modules and you can use Ctrl+C to leave.
-     */
+    * [Install Stage] Install node_modules.
+    */
     install () {
-        if (task.overwrite_src) {
-            del(['src/**/.gitignore','src/**/.npmignore']);
-        }
-        if (task.install_node_modules) {
+        let finish = () => {
+            this.log(`> node_modules ${ chalk.green('√') }`);
+            this.log('> finished.');
+        };
+        if (this.exists('node_modules')) {
+            finish();
+        } else {
             let choices = [
                 'Link to the shared node_modules',
                 'Install here',
             ];
-            this.prompt([
+            return this.prompt([
                 {
                     type : 'list',
                     name : 'install_node_modules',
@@ -189,24 +181,27 @@ module.exports = generator.Base.extend({
                 },
             ]).then(( answers ) => {
                 if (answers.install_node_modules == choices[0]) {
-                    fs.symlinkSync(path.join(__dirname, './templates/node_modules'), 'node_modules');
-                    log('> 初始化已完成');
-                    process.exit(1);
+                    if (fs.existsSync(this.templatePath('node_modules'))) {
+                        fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                        finish();
+                    } else {
+                        this.log('> shared node_modules is installing...');
+                        this.runInstall('npm', null, {}, () => {
+                            fs.symlinkSync(this.templatePath('node_modules'), 'node_modules');
+                            finish();
+                        }, {
+                            cwd : this.templatePath(),
+                        });
+                    }
                 } else {
                     this.installDependencies({
                         npm : true,
                         bower : false,
                         skipInstall : false,
-                        callback () {
-                            log('> 初始化已完成');
-                            process.exit(1);
-                        }
+                        callback : finish,
                     });
                 }
             });
-        } else {
-            log('> 初始化已完成');
-            process.exit(1);
         }
-    },
-});
+    }
+};
