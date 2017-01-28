@@ -10,7 +10,7 @@ const packageJson = require('../package.json');
 
 const alias = {};
 const imageSize = 10240;
-const constant = {
+const constants = {
     NAME : packageJson.name,
     VERSION : packageJson.version,
 };
@@ -70,14 +70,7 @@ let config = {
     },
     plugins : [
         new ExtractTextWebpackPlugin('css/[name].css'),
-        new webpack.DefinePlugin((() => {
-            Object.keys(constant).forEach(( key ) => {
-                constant[key] = JSON.stringify(constant[key]);
-            });
-            return {
-                'process.env' : constant,
-            };
-        })()),
+        new webpack.DefinePlugin({ 'process.env' : constants.map(( value ) => JSON.stringify(value)) });
     ],
     vue : {
         loaders : {
