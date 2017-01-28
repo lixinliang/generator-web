@@ -33,31 +33,25 @@ const banner =
 
 process.argv.forEach(( param ) => {
     if (/^--/.test(param)) {
-        let temp = param.slice(2).split('=');
-        let key = temp[0];
-        let value = temp[1] || true;
+        let array = param.slice(2).split('=');
+        let key = array[0];
+        let value = array[1] || true;
         process.argv[key] = value;
     }
 });
 
 let config = {
     entry,
-    output : (() => {
-        if (process.argv.build == 'js') {
-            return {
-                path : './dist/',
-                filename : `[name].min.js`,
-                library : process.argv.library,
-                libraryTarget : process.argv.libraryTarget,
-            };
-        } else {
-            return {
-                path : './dist/',
-                filename : 'js/[name].js',
-                publicPath : '',
-            };
-        }
-    })(),
+    output : process.argv.build == 'js' ? {
+        path : './dist/',
+        filename : `[name].min.js`,
+        library : process.argv.library,
+        libraryTarget : process.argv.libraryTarget,
+    } : {
+        path : './dist/',
+        filename : 'js/[name].js',
+        publicPath : '',
+    },
     extensions : ['.vue', '.js', '.coffee', '.json', '.scss'],
     resolve : {
         alias,
@@ -101,15 +95,7 @@ let config = {
         ],
     },
     plugins : [
-        new webpack.DefinePlugin((() => {
-            let result = {};
-            Object.keys(constant).forEach(( key ) => {
-                result[key] = JSON.stringify(constant[key]);
-            });
-            return {
-                'process.env' : result,
-            };
-        })()),
+        new webpack.DefinePlugin({ 'process.env' : constants.map(( value ) => JSON.stringify(value)) });
         new webpack.BannerPlugin(banner),
     ],
     vue : {
@@ -123,36 +109,27 @@ let config = {
     },
 };
 
-let plugins = config.plugins;
 if (process.argv.build == 'js') {
-    plugins.unshift(new UnminifiedWebpackPlugin());
-    plugins.unshift(new webpack.optimize.UglifyJsPlugin({
-        compress : {
-            warnings : false,
-        },
-        output : {
-            comments : false,
-        },
-    }));
-    plugins.unshift(new CleanWebpackPlugin(['dist'], {
-        root : path.join(__dirname, '..'),
-    }));
+    config.plugins.unshift(
+        new CleanWebpackPlugin(['dist'], { root : path.join(__dirname, '..') }),
+        new webpack.optimize.UglifyJsPlugin({
+            compress : {
+                warnings : false,
+            },
+            output : {
+                comments : false,
+            },
+        }),
+        new UnminifiedWebpackPlugin()
+    );
 } else {
-    plugins.unshift(new webpack.optimize.UglifyJsPlugin({
-        compress : {
-            warnings : false,
-        },
-        output : {
-            comments : false,
-        },
-    }));
-    plugins.unshift(new CopyWebpackPlugin((() => {
-        let result = [];
-        fs.readdirSync(sourcePath).forEach(( filename ) => {
-            let file = path.join(sourcePath, filename);
+    config.plugins.unshift(
+        new CleanWebpackPlugin(['dist'], { root : path.join(__dirname, '..') }),
+        new CopyWebpackPlugin(fs.readdirSync(sourcePath).map(( filename ) => {
             if (filename[0] === '.') {
                 return;
             }
+            let file = path.join(sourcePath, filename);
             let stats = fs.statSync(file);
             if (stats.isDirectory()) {
                 if (filename == 'entry') {
@@ -167,21 +144,25 @@ if (process.argv.build == 'js') {
                     return;
                 }
             }
-            result.push({
+            return {
                 from : file,
                 to : filename,
-            });
-        });
-        return result;
-    })()));
-    plugins.unshift(new CleanWebpackPlugin(['dist'], {
-        root : path.join(__dirname, '..'),
-    }));
-    plugins.push(new ExtractTextWebpackPlugin('css/[name].css'));
+            };
+        })),
+        new webpack.optimize.UglifyJsPlugin({
+            compress : {
+                warnings : false,
+            },
+            output : {
+                comments : false,
+            },
+        })
+    );
+    config.plugins.push(new ExtractTextWebpackPlugin('css/[name].css'));
     fs.readdirSync(sourcePath).forEach(( filename ) => {
         let template = path.join(sourcePath, filename);
         if (/\.(appcache|html)$/.test(filename)) {
-            plugins.push(new HtmlWebpackPlugin({
+            config.plugins.push(new HtmlWebpackPlugin({
                 minify : false,
                 inject : false,
                 filename,
@@ -189,7 +170,7 @@ if (process.argv.build == 'js') {
             }));
         }
     });
-    plugins.push(new HtmlInlineSourceWebpackPlugin());
+    config.plugins.push(new HtmlInlineSourceWebpackPlugin());
 }
 
 module.exports = config;
