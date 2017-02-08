@@ -50,7 +50,7 @@ let config = {
             },
             {
                 test : /\.js$/,
-                exclude : path.join(__dirname, '../node_modules/'),
+                exclude : path.resolve('node_modules'),
                 loader : 'babel',
                 query : {
                     presets : ['es2015', 'stage-0'],
@@ -70,7 +70,7 @@ let config = {
     },
     plugins : [
         new ExtractTextWebpackPlugin('css/[name].css'),
-        new webpack.DefinePlugin({ 'process.env' : constants.map(( value ) => JSON.stringify(value)) });
+        new webpack.DefinePlugin({ 'process.env' : (Object.keys(constants).forEach(( key ) => constants[key] = JSON.stringify(constants[key])), constants) }),
     ],
     vue : {
         loaders : {
