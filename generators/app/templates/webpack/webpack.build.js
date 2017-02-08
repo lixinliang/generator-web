@@ -18,8 +18,8 @@ const packageJson = require('../package.json');
 
 const alias = {};
 const imageSize = 10240;
-const sourcePath = path.join(__dirname, '../src');
-const constant = {
+const sourcePath = path.resolve('../src');
+const constants = {
     NODE_ENV : 'production',
     NAME : packageJson.name,
     VERSION : packageJson.version,
@@ -76,7 +76,7 @@ let config = {
             },
             {
                 test : /\.js$/,
-                exclude : path.join(__dirname, '../node_modules/'),
+                exclude : path.resolve('node_modules'),
                 loader : 'babel',
                 query : {
                     presets : ['es2015', 'stage-0'],
@@ -95,7 +95,7 @@ let config = {
         ],
     },
     plugins : [
-        new webpack.DefinePlugin({ 'process.env' : constants.map(( value ) => JSON.stringify(value)) });
+        new webpack.DefinePlugin({ 'process.env' : (Object.keys(constants).forEach(( key ) => constants[key] = JSON.stringify(constants[key])), constants) }),
         new webpack.BannerPlugin(banner),
     ],
     vue : {
@@ -111,7 +111,7 @@ let config = {
 
 if (process.argv.build == 'js') {
     config.plugins.unshift(
-        new CleanWebpackPlugin(['dist'], { root : path.join(__dirname, '..') }),
+        new CleanWebpackPlugin(['dist'], { root : path.resolve('..') }),
         new webpack.optimize.UglifyJsPlugin({
             compress : {
                 warnings : false,
@@ -124,7 +124,7 @@ if (process.argv.build == 'js') {
     );
 } else {
     config.plugins.unshift(
-        new CleanWebpackPlugin(['dist'], { root : path.join(__dirname, '..') }),
+        new CleanWebpackPlugin(['dist'], { root : path.resolve('..') }),
         new CopyWebpackPlugin(fs.readdirSync(sourcePath).map(( filename ) => {
             if (filename[0] === '.') {
                 return;
