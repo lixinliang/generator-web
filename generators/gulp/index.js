@@ -153,8 +153,6 @@ module.exports = class Generator extends Base {
                     });
                 }
             });
-        }).then(() => {
-            this.fs.delete('src/**/.npmignore');
         }).then(done);
     }
     /**
