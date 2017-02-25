@@ -50,13 +50,13 @@ let config = {
             },
             {
                 test : /\.js$/,
-                exclude : path.resolve('node_modules'),
                 loader : 'babel',
-                query : {
-                    presets : ['es2015', 'stage-0'],
-                    // plugins : ['transform-remove-strict-mode'],
-                    // plugins: ['transform-runtime'],
-                },
+                exclude : [
+                    path.resolve('node_modules'),
+                    /node_modules\/babel-/m,
+                    /node_modules\/core-js\//m,
+                    /node_modules\/regenerator-runtime\//m,
+                ],
             },
             {
                 test : /\.coffee/,
@@ -72,6 +72,11 @@ let config = {
         new ExtractTextWebpackPlugin('css/[name].css'),
         new webpack.DefinePlugin({ 'process.env' : (Object.keys(constants).forEach(( key ) => constants[key] = JSON.stringify(constants[key])), constants) }),
     ],
+    babel : {
+        presets : ['es2015', 'stage-0'],
+        // plugins : ['transform-runtime'],
+        // plugins : ['transform-remove-strict-mode'],
+    },
     vue : {
         loaders : {
             sass : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
