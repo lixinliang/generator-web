@@ -10,13 +10,13 @@ let inquirer = require('inquirer');
 const port = 8080;
 const task = process.argv[2].substring(1);
 const buildjs = process.argv[3] == 'js';
-const sourcePath = path.resolve('../src');
-const outputPath = path.resolve('../dist');
+const sourcePath = path.resolve('./src');
+const outputPath = path.resolve('./dist');
 
 let start = () => {
     function reboot ( err ) {
         if (/listen EADDRINUSE/.test(err.toString())) {
-            console.log(`\n${ port } is aleary in use. Ctrl+C to leave or input a PID to kill：`.green);
+            console.log(`\n${ port } is already in use. Ctrl+C to leave or input a PID to kill：`.green);
             Promise.resolve(`lsof -i tcp:${ port }`).then(step2).then(step3).then(( pid ) => {
                 return `kill ${ pid }`;
             }).then(step2).catch(( err ) => {
@@ -70,7 +70,7 @@ let step1 = () => new Promise(( resolve, reject ) => {
                 entry[path.basename(filename, '.js')] = file;
             }
         });
-        fse.outputJson(path.resolve('webpack.entry.json'), entry, ( err ) => {
+        fse.outputJson(path.resolve('webpack', 'webpack.entry.json'), entry, ( err ) => {
             if (err) {
                 reject(err);
                 return;
@@ -130,7 +130,7 @@ let step4 = ( entry ) => new Promise(( resolve, reject ) => {
             let file = path.basename(answers.file, '.js');
             let js = {};
             js[file] = entry[file];
-            fse.outputJson(path.resolve('webpack.entry.json'), js, ( err ) => {
+            fse.outputJson(path.resolve('webpack', 'webpack.entry.json'), js, ( err ) => {
                 if (err) {
                     reject(err);
                     return;
