@@ -18,7 +18,7 @@ const packageJson = require('../package.json');
 
 const alias = {};
 const imageSize = 10240;
-const sourcePath = path.resolve('../src');
+const sourcePath = path.resolve('src');
 const constants = {
     NODE_ENV : 'production',
     NAME : packageJson.name,
@@ -76,13 +76,13 @@ let config = {
             },
             {
                 test : /\.js$/,
-                exclude : path.resolve('node_modules'),
                 loader : 'babel',
-                query : {
-                    presets : ['es2015', 'stage-0'],
-                    // plugins : ['transform-remove-strict-mode'],
-                    // plugins: ['transform-runtime'],
-                },
+                exclude : [
+                    path.resolve('node_modules'),
+                    /node_modules\/babel-/m,
+                    /node_modules\/core-js\//m,
+                    /node_modules\/regenerator-runtime\//m,
+                ],
             },
             {
                 test : /\.coffee/,
@@ -98,6 +98,11 @@ let config = {
         new webpack.DefinePlugin({ 'process.env' : (Object.keys(constants).forEach(( key ) => constants[key] = JSON.stringify(constants[key])), constants) }),
         new webpack.BannerPlugin(banner),
     ],
+    babel : {
+        presets : ['es2015', 'stage-0'],
+        // plugins : ['transform-runtime'],
+        // plugins : ['transform-remove-strict-mode'],
+    },
     vue : {
         loaders : {
             sass : ExtractTextWebpackPlugin.extract('style', 'css!postcss!sass'),
@@ -111,7 +116,7 @@ let config = {
 
 if (process.argv.build == 'js') {
     config.plugins.unshift(
-        new CleanWebpackPlugin(['dist'], { root : path.resolve('..') }),
+        new CleanWebpackPlugin(['dist'], { root : path.resolve() }),
         new webpack.optimize.UglifyJsPlugin({
             compress : {
                 warnings : false,
@@ -124,31 +129,35 @@ if (process.argv.build == 'js') {
     );
 } else {
     config.plugins.unshift(
-        new CleanWebpackPlugin(['dist'], { root : path.resolve('..') }),
-        new CopyWebpackPlugin(fs.readdirSync(sourcePath).map(( filename ) => {
-            if (filename[0] === '.') {
-                return;
-            }
-            let file = path.join(sourcePath, filename);
-            let stats = fs.statSync(file);
-            if (stats.isDirectory()) {
-                if (filename == 'entry') {
+        new CleanWebpackPlugin(['dist'], { root : path.resolve() }),
+        new CopyWebpackPlugin((() => {
+            let result = [];
+            fs.readdirSync(sourcePath).forEach(( filename ) => {
+                let file = path.join(sourcePath, filename);
+                if (filename[0] === '.') {
                     return;
                 }
-            }
-            if (stats.isFile()) {
-                if (path.extname(file) == '.html') {
-                    return;
+                let stats = fs.statSync(file);
+                if (stats.isDirectory()) {
+                    if (filename == 'entry') {
+                        return;
+                    }
                 }
-                if (path.extname(file) == '.appcache') {
-                    return;
+                if (stats.isFile()) {
+                    if (path.extname(file) == '.html') {
+                        return;
+                    }
+                    if (path.extname(file) == '.appcache') {
+                        return;
+                    }
                 }
-            }
-            return {
-                from : file,
-                to : filename,
-            };
-        })),
+                result.push({
+                    from : file,
+                    to : filename,
+                });
+            });
+            return result;
+        })()),
         new webpack.optimize.UglifyJsPlugin({
             compress : {
                 warnings : false,
@@ -162,6 +171,9 @@ if (process.argv.build == 'js') {
     fs.readdirSync(sourcePath).forEach(( filename ) => {
         let template = path.join(sourcePath, filename);
         if (/\.(appcache|html)$/.test(filename)) {
+            if (filename == '_index.html') {
+                filename = 'index.html';
+            }
             config.plugins.push(new HtmlWebpackPlugin({
                 minify : false,
                 inject : false,
