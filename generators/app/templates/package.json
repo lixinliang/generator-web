@@ -39,6 +39,7 @@
     "minifycss-loader": "^0.2.0",
     "moment": "^2.17.1",
     "node-sass": "^4.3.0",
+    "normalize.css": "^5.0.0",
     "postcss-loader": "^1.2.0",
     "raw-loader": "^0.5.1",
     "sass-loader": "^4.0.2",
