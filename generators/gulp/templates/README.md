@@ -16,7 +16,7 @@
 
 ## Usage
 
-* `$ yo web`
+* `$ yo web:gulp`
 
 ## Directory Tree
 
