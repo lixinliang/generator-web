@@ -3,3 +3,6 @@
 
 ## 0.0.2
 * add template gulp
+
+## 0.0.3
+* add template vue
