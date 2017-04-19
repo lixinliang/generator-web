@@ -11,13 +11,12 @@
 
 * Node - v4.7.0
 * npm - 2.15.11
+* yo - 1.8.5
 
 ### Installation
 
 * Clone or download.
-* `$ cd generator-web`
 * `$ npm install`
-    * If install fail, please try again later.
 
 ## License
 
